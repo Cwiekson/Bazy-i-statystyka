@@ -1,0 +1,45 @@
+Create TABLE regions(region_id int PRIMARY KEY,region_name VARCHAR(40));
+CREATE TABLE countries(country_id int PRIMARY KEY, country_name VARCHAR(40), region_id int);
+ALTER TABLE countries ADD FOREIGN KEY(region_id) REFERENCES regions(region_id) ON DELETE CASCADE;
+CREATE TABLE locations(
+location_id int PRIMARY KEY, 
+street_address VARCHAR(40),
+postal_code VARCHAR(40), 
+city  VARCHAR(40),
+state_province VARCHAR(40),
+country_id int,
+FOREIGN KEY(country_id)REFERENCES countries(country_id));
+CREATE TABLE departments(department_id int PRIMARY KEY,
+department_name VARCHAR(40),
+manager_id int,
+location_id int);
+ALTER TABLE departments ADD FOREIGN KEY(location_id) REFERENCES locations(location_id) ON DELETE CASCADE;
+CREATE TABLE jobs(job_id int PRIMARY KEY,
+job_title  VARCHAR(40),
+min_salary int,
+max_salary int,
+CHECK( (min_salary < max_salary) AND (max_salary >= 2000)));
+CREATE TABLE job_history(employee_id  int,start_date DATE,end_date DATE,
+job_id int, department_id int, 
+PRIMARY KEY( employee_id,start_date));
+CREATE TABLE employees(employee_id int PRIMARY KEY,
+first_name  VARCHAR(40),
+last_name  VARCHAR(40),
+email  VARCHAR(40),
+phone  VARCHAR(9),
+hire_date DATE,
+job_id int,
+salary int,
+commissin_pct  NUMBER(3,2),
+manager_id int,
+department_id int);
+ALTER TABLE employees ADD FOREIGN KEY(job_id) REFERENCES jobs(job_id) ON DELETE CASCADE;
+ALTER TABLE job_history ADD FOREIGN KEY(employee_id) REFERENCES employees(employee_id) ON DELETE CASCADE;
+ALTER TABLE employees ADD FOREIGN KEY(department_id) REFERENCES departments(department_id) ON DELETE CASCADE;
+ALTER TABLE departments ADD FOREIGN KEY(manager_id) REFERENCES employees(employee_id) ON DELETE CASCADE;
+ALTER TABLE employees ADD FOREIGN KEY(manager_id) REFERENCES employees(employee_id) ON DELETE CASCADE;
+
+DROP TABLE countries CASCADE CONSTRAINTS;
+
+
+FLASHBACK TABLE COUNTRIES TO BEFORE DROP;
