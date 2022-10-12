@@ -1,0 +1,44 @@
+CREATE TABLE countries AS Select * From HR.countries;
+CREATE TABLE departments AS Select * From HR.departments;
+CREATE TABLE employees AS Select * From HR.employees;
+CREATE TABLE job_grades AS Select * From HR.job_grades;
+CREATE TABLE job_history AS Select * From HR.job_history;
+CREATE TABLE jobs AS Select * From HR.jobs;
+CREATE TABLE locations AS Select * From HR.locations;
+CREATE TABLE regions AS Select * From HR.regions;
+
+
+
+ALTER TABLE countries ADD FOREIGN KEY(region_id) REFERENCES regions(region_id) ON DELETE CASCADE;
+ALTER TABLE departments ADD FOREIGN KEY(location_id) REFERENCES locations(location_id) ON DELETE CASCADE;
+ALTER TABLE employees ADD FOREIGN KEY(job_id) REFERENCES jobs(job_id) ON DELETE CASCADE;
+ALTER TABLE job_history ADD FOREIGN KEY(employee_id) REFERENCES employees(employee_id) ON DELETE CASCADE;
+ALTER TABLE employees ADD FOREIGN KEY(department_id) REFERENCES departments(department_id) ON DELETE CASCADE;
+ALTER TABLE departments ADD FOREIGN KEY(manager_id) REFERENCES employees(employee_id) ON DELETE CASCADE;
+ALTER TABLE employees ADD FOREIGN KEY(manager_id) REFERENCES employees(employee_id) ON DELETE CASCADE;
+
+
+SELECT CONCAT(last_name, salary) as wynagrodzenie from employees 
+where  employees.department_id = 20 OR employees.department_id = 50
+AND employees.salary BETWEEN 2000 AND 7000 ORDER BY  employees.last_name;
+
+SELECT hire_date, last_name,& as user_col from employees
+WHERE manager_id is not null AND 
+extract(YEAR from hire_date) =2005
+ORDER BY user_col;
+
+SELECT CONCAT(first_name,last_name) as person,salary,phone_number from employees
+where INSTR(last_name,'e',3,1)= 3
+AND INSTR(first_name,'&name',1,1) != 0
+ORDER BY person desc,salary ;
+
+SELECT CONCAT(first_name,last_name), ROUND(MONTHS_BETWEEN(CURRENT_DATE,hire_date),0) as ilosc_miesiecy, CASE
+WHEN  ROUND(MONTHS_BETWEEN(CURRENT_DATE,hire_date),0) <150 THEN salary * 0.1
+WHEN  ROUND(MONTHS_BETWEEN(CURRENT_DATE,hire_date),0) BETWEEN 150 AND 200 THEN salary * 0.2
+ELSE salary * 0.3
+END as wysokosc_dodatku
+from employees
+ORDER BY ilosc_miesiecy;
+
+
+SELECT department_name from departments where
