@@ -41,4 +41,16 @@ from employees
 ORDER BY ilosc_miesiecy;
 
 
-SELECT department_name from departments where
+SELECT departments.department_name, SUM(salary) AS suma, ROUND(AVG(salary), 0) AS srednia
+    FROM employees e1 JOIN departments on e1.department_id = departments.department_id
+    WHERE 5000 < (SELECT MIN(salary) FROM employees e2 JOIN departments on e2.department_id = departments.department_id WHERE e1.department_id = e2.department_id)
+    GROUP BY departments.department_name;
+    
+    
+
+SELECT last_name, employees.department_id, departments.department_name, job_id, locations.city from employees JOIN departments on 
+departments.department_id = employees.department_id JOIN locations on locations.location_id = departments.location_id WHERE locations.city = 'Toronto' ;
+
+SELECT e1.first_name, e1.last_name, e2.first_name, e2.last_name from employees e1  JOIN employees e2 on e1.department_id = e2.department_id WHERE e1.first_name = 'Jennifer';
+
+SELECT department_name from departments 
