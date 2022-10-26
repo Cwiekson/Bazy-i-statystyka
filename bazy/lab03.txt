@@ -1,0 +1,50 @@
+DECLARE
+    numer_max NUMBER(4,0);
+    name DEPARTMENTS.department_name%TYPE := 'EDUCATION';
+
+BEGIN
+    SELECT MAX(department_id) INTO numer_max FROM departments;
+    dbms_output.put_line(numer_max);
+    INSERT INTO departments(department_id, department_name) VALUES (numer_max + 10, name);
+    UPDATE departments SET LOCATION_ID=3000 WHERE department_name = name;
+END;
+
+-- Zad 3
+
+CREATE TABLE nowa(liczby VARCHAR(15));
+
+DECLARE
+    liczba NUMBER(2) := 1;
+
+BEGIN
+    LOOP
+        IF liczba != 4 AND liczba != 6 THEN
+            INSERT INTO nowa VALUES (liczba);
+        END IF;
+        EXIT WHEN liczba = 10;
+        liczba := liczba+1;
+    END LOOP;
+END;
+
+
+-- Zad 4
+DECLARE
+    kraj countries%ROWTYPE;
+
+BEGIN
+    SELECT * INTO kraj FROM countries WHERE country_id = 'CA';
+    dbms_output.put_line(kraj.country_name);
+    dbms_output.put_line(kraj.region_id);
+END;
+
+-- zad 5
+
+DECLARE
+TYPE table_depart IS TABLE OF
+	departments.department_name%TYPE
+INDEX BY PLS_INTEGER;
+depart table_depart;
+BEGIN
+depart(1):=4;
+dbms_output.put_line(depart.count);
+END;
