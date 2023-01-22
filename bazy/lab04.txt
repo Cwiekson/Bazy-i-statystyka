@@ -1,0 +1,144 @@
+-- zad1.1
+CREATE FUNCTION nazwa_pracy (job_id_param IN JOBS.JOB_ID%TYPE) RETURN JOBS.JOB_TITLE%TYPE
+AS
+  nazwa_pracy JOBS.JOB_TITLE%TYPE;
+BEGIN
+  SELECT j.JOB_TITLE INTO nazwa_pracy
+  FROM JOBS j
+  WHERE j.JOB_ID = job_id_param;
+
+  RETURN nazwa_pracy;
+END;
+
+SELECT nazwa_pracy('ST_CLERK') FROM DUAL;
+
+--zad1.2
+CREATE FUNCTION roczne_zarobki (employee_id_param IN EMPLOYEES.EMPLOYEE_ID%TYPE) RETURN NUMBER
+
+AS
+  roczne_zarobki NUMBER;
+BEGIN
+  SELECT (e.SALARY * 12) + (e.SALARY * e.COMMISSION_PCT) INTO roczne_zarobki
+  FROM EMPLOYEES e
+  WHERE e.EMPLOYEE_ID = employee_id_param;
+
+  RETURN roczne_zarobki;
+END;
+SELECT roczne_zarobki(200) FROM DUAL;
+
+
+--zad1.3
+CREATE FUNCTION numer_kierunkowy (numer_telefonu_param IN VARCHAR2) RETURN VARCHAR2
+AS
+  numer_kierunkowy VARCHAR2(4);
+BEGIN
+  SELECT SUBSTR(numer_telefonu_param, 1, 4) INTO numer_kierunkowy FROM DUAL;
+
+  RETURN numer_kierunkowy;
+END;
+
+SELECT numer_kierunkowy('+48123456789') FROM DUAL;
+
+--zad1.4
+CREATE FUNCTION wielka_pierwsza_ostatnia (ciag_znakow_param IN VARCHAR2) RETURN VARCHAR2
+AS
+  wynik VARCHAR2(100);
+BEGIN
+  wynik := UPPER(SUBSTR(ciag_znakow_param, 1, 1)) ||
+           LOWER(SUBSTR(ciag_znakow_param, 2, LENGTH(ciag_znakow_param) - 2)) ||
+           UPPER(SUBSTR(ciag_znakow_param, LENGTH(ciag_znakow_param), 1));
+
+  RETURN wynik;
+END;
+
+SELECT wielka_pierwsza_ostatnia('abcdefg') FROM DUAL;
+
+
+
+CREATE PACKAGE paczka4 AS
+
+    PROCEDURE dodaj_job1  (job_id_param IN JOBS.JOB_ID%TYPE, job_title_param IN JOBS.JOB_TITLE%TYPE);
+    PROCEDURE zmien_title  (id_param IN JOBS.JOB_ID%TYPE, nowa_wartosc_param IN JOBS.JOB_TITLE%TYPE);
+    PROCEDURE usun_job  (id_param IN JOBS.JOB_ID%TYPE);
+    PROCEDURE zarobki_nazwisko  (id_param IN EMPLOYEES.EMPLOYEE_ID%TYPE, zarobki_param OUT NUMBER, imie_param OUT VARCHAR2, nazwisko_param OUT VARCHAR2);
+    PROCEDURE dodaj_pracownika  (wynagrodzenie_param IN NUMBER DEFAULT 5000, imie_param IN VARCHAR2 DEFAULT 'Jan', nazwisko_param IN VARCHAR2 DEFAULT 'Kowalski');
+    
+    FUNCTION nazwa_pracy (id_param IN JOBS.JOB_ID%TYPE) RETURN VARCHAR2;
+    FUNCTION roczne_zarobki (id_param IN EMPLOYEES.EMPLOYEE_ID%TYPE) RETURN NUMBER;
+    FUNCTION numer_kierunkowy (numer_param IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION wielka_pierwsza_ostatnia (ciag_param IN VARCHAR2) RETURN VARCHAR2;
+      
+    END paczka4;
+    
+    
+CREATE PACKAGE BODY paczka4  AS
+    
+    PROCEDURE dodaj_job1 (job_id_param IN JOBS.JOB_ID%TYPE, job_title_param IN JOBS.JOB_TITLE%TYPE) IS
+    BEGIN
+    INSERT INTO JOBS (JOB_ID, JOB_TITLE) VALUES (job_id_param, job_title_param);
+    EXCEPTION
+    WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Wystąpił błąd' || SQLERRM);
+    END dodaj_job1;
+    
+    PROCEDURE zmien_title (id_param IN JOBS.JOB_ID%TYPE, nowa_wartosc_param IN JOBS.JOB_TITLE%TYPE) IS
+    BEGIN
+    UPDATE JOBS
+    SET JOB_TITLE = nowa_wartosc_param
+    WHERE JOB_ID = id_param;
+    END zmien_title;
+    
+    PROCEDURE usun_job (id_param IN JOBS.JOB_ID%TYPE) IS
+    BEGIN
+    DELETE FROM JOBS
+    WHERE JOB_ID = id_param;
+    EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('Wystąpił błąd.');
+    END usun_job;
+    
+    PROCEDURE zarobki_nazwisko (id_param IN EMPLOYEES.EMPLOYEE_ID%TYPE, zarobki_param OUT NUMBER, imie_param OUT VARCHAR2, nazwisko_param OUT VARCHAR2) IS
+    BEGIN
+    SELECT salary, first_name, last_name INTO zarobki_param, imie_param, nazwisko_param
+    FROM EMPLOYEES
+    WHERE EMPLOYEE_ID = id_param;
+    END zarobki_nazwisko;
+    
+    PROCEDURE dodaj_pracownika (wynagrodzenie_param IN NUMBER DEFAULT 5000, imie_param IN VARCHAR2 DEFAULT 'Jan', nazwisko_param IN VARCHAR2 DEFAULT 'Kowalski') IS
+    BEGIN
+    IF wynagrodzenie_param > 20000 THEN
+      RAISE_APPLICATION_ERROR(-20001, 'Wynagrodzenie pracownika jest za wysokie');
+    END IF;
+    INSERT INTO EMPLOYEES (EMPLOYEE_ID, FIRST_NAME, LAST_NAME, SALARY) VALUES (moja_sekwencja.NEXTVAL, imie_param, nazwisko_param, wynagrodzenie_param);
+    END dodaj_pracownika;
+    
+    
+    FUNCTION nazwa_pracy (id_param IN JOBS.JOB_ID%TYPE) RETURN VARCHAR2 IS
+    nazwa_pracy VARCHAR2(50);
+    BEGIN
+    SELECT JOB_TITLE INTO nazwa_pracy
+    FROM JOBS
+    WHERE JOB_ID = id_param;
+    RETURN nazwa_pracy;
+    END nazwa_pracy;
+    
+    FUNCTION roczne_zarobki (id_param IN EMPLOYEES.EMPLOYEE_ID%TYPE) RETURN NUMBER IS
+    roczne_zarobki NUMBER;
+    BEGIN
+    SELECT salary * 12 + salary * (commission_pct / 100) INTO roczne_zarobki
+    FROM EMPLOYEES
+    WHERE EMPLOYEE_ID = id_param;
+    RETURN roczne_zarobki;
+    END roczne_zarobki;
+    
+    FUNCTION numer_kierunkowy (numer_param IN VARCHAR2) RETURN VARCHAR2 IS
+    numer_kierunkowy VARCHAR2(5);
+    BEGIN
+    SELECT SUBSTR(numer_param, 1, 2) INTO numer_kierunkowy
+    FROM DUAL;
+    RETURN numer_kierunkowy;
+    END numer_kierunkowy;
+    
+    END paczka4;
+    
+    
