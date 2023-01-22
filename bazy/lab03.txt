@@ -40,11 +40,188 @@ END;
 -- zad 5
 
 DECLARE
-TYPE table_depart IS TABLE OF
-	departments.department_name%TYPE
-INDEX BY PLS_INTEGER;
-depart table_depart;
+  TYPE departamenty_tabela IS TABLE OF DEPARTMENTS.DEPARTMENT_NAME%TYPE
+    INDEX BY BINARY_INTEGER;
+  departamenty departamenty_tabela;
 BEGIN
-depart(1):=4;
-dbms_output.put_line(depart.count);
+  SELECT DEPARTMENT_NAME
+  BULK COLLECT INTO departamenty
+  FROM DEPARTMENTS
+  WHERE DEPARTMENT_ID BETWEEN 10 AND 100
+  AND MOD(DEPARTMENT_ID, 10) = 0;
+  FOR i IN departamenty.FIRST..departamenty.LAST LOOP
+    DBMS_OUTPUT.PUT_LINE(departamenty(i));
+  END LOOP;
+END
+;
+
+-- zad6
+
+DECLARE
+  TYPE departamenty_tabela IS TABLE OF DEPARTMENTS%ROWTYPE
+    INDEX BY BINARY_INTEGER;
+  departamenty departamenty_tabela;
+BEGIN
+  SELECT *
+  BULK COLLECT INTO departamenty
+  FROM DEPARTMENTS
+  WHERE DEPARTMENT_ID BETWEEN 10 AND 100
+  AND MOD(DEPARTMENT_ID, 10) = 0;
+  FOR i IN departamenty.FIRST..departamenty.LAST LOOP
+    DBMS_OUTPUT.PUT_LINE('ID: ' || departamenty(i).DEPARTMENT_ID || ' Nazwa: ' || departamenty(i).DEPARTMENT_NAME || ' Manager: ' || departamenty(i).MANAGER_ID || ' Location: ' || departamenty(i).LOCATION_ID);
+  END LOOP;
+END;
+
+-- zad7
+
+DECLARE
+  CURSOR wynagrodzenia_kursor IS
+    SELECT e.salary, e.last_name
+    FROM EMPLOYEES e
+    INNER JOIN DEPARTMENTS d
+    ON e.department_id = d.department_id
+    WHERE d.department_id = 50;
+  rekord wynagrodzenia_kursor%ROWTYPE;
+BEGIN
+  OPEN wynagrodzenia_kursor;
+  FETCH wynagrodzenia_kursor INTO rekord;
+  WHILE wynagrodzenia_kursor%FOUND LOOP
+    IF rekord.salary > 3100 THEN
+      DBMS_OUTPUT.PUT_LINE(rekord.last_name || ' nie dawać podwyżki');
+    ELSE
+      DBMS_OUTPUT.PUT_LINE(rekord.last_name || ' dać podwyżkę');
+    END IF;
+    FETCH wynagrodzenia_kursor INTO rekord;
+  END LOOP;
+  CLOSE wynagrodzenia_kursor;
+END;
+
+
+-- zad8
+
+DECLARE
+  CURSOR pracownicy_kursor (min_zarobki NUMBER, max_zarobki NUMBER, czesc_imienia VARCHAR2) IS
+    SELECT e.salary, e.first_name, e.last_name
+    FROM EMPLOYEES e
+    WHERE e.salary BETWEEN min_zarobki AND max_zarobki
+    AND e.first_name LIKE '%' || czesc_imienia || '%';
+  rekord pracownicy_kursor%ROWTYPE;
+BEGIN
+  -- podpunkt a
+  DBMS_OUTPUT.PUT_LINE('Pracownicy  1000-5000 z częścią imienia a (może być również A):');
+  OPEN pracownicy_kursor(1000, 5000, 'a');
+  FETCH pracownicy_kursor INTO rekord;
+  WHILE pracownicy_kursor%FOUND LOOP
+    DBMS_OUTPUT.PUT_LINE(rekord.first_name || ' ' || rekord.last_name || ' ' || rekord.salary);
+    FETCH pracownicy_kursor INTO rekord;
+  END LOOP;
+  CLOSE pracownicy_kursor;
+   DBMS_OUTPUT.PUT_LINE('Pracownicy 5000-20000 z częścią imienia u (może być również U):');
+  OPEN pracownicy_kursor(5000, 20000, 'u');
+  FETCH pracownicy_kursor INTO rekord;
+  WHILE pracownicy_kursor%FOUND LOOP
+    DBMS_OUTPUT.PUT_LINE(rekord.first_name || ' ' || rekord.last_name || ' ' || rekord.salary);
+    FETCH pracownicy_kursor INTO rekord;
+  END LOOP;
+  CLOSE pracownicy_kursor;
+END;
+
+
+--zad9a
+
+CREATE PROCEDURE dodaj_job1 (
+  job_id_param IN JOBS.JOB_ID%TYPE,
+  job_title_param IN JOBS.JOB_TITLE%TYPE
+) AS
+BEGIN
+  INSERT INTO JOBS (JOB_ID, JOB_TITLE)
+  VALUES (job_id_param, job_title_param);
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Wystąpił błąd ' || SQLERRM);
+END;
+
+BEGIN
+  dodaj_job1('JOB_123', 'Manager');
+END;
+
+
+--zad9 b
+
+CREATE PROCEDURE zmien_title (
+  job_id_param IN JOBS.JOB_ID%TYPE,
+  nowy_title_param IN JOBS.JOB_TITLE%TYPE
+) AS
+BEGIN
+  UPDATE JOBS
+  SET JOB_TITLE = nowy_title_param
+  WHERE JOB_ID = job_id_param;
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Wystąpił błąd : ' || SQLERRM);
+END;
+
+BEGIN
+  zmien_title('JOB_123', 'Senior Manager');
+END;
+
+--zad9 c
+
+CREATE PROCEDURE usun_job (
+  job_id_param IN JOBS.JOB_ID%TYPE
+) AS
+BEGIN
+  DELETE FROM JOBS
+  WHERE JOB_ID = job_id_param;
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('Wystąpił błąd.');
+END;
+
+BEGIN
+  usun_job('JOB_123');
+END;
+
+--zad9d
+CREATE PROCEDURE zarobki_nazwisko (
+  employee_id_param IN EMPLOYEES.EMPLOYEE_ID%TYPE,
+  zarobki_param OUT EMPLOYEES.SALARY%TYPE,
+  nazwisko_param OUT EMPLOYEES.LAST_NAME%TYPE
+) AS
+BEGIN
+  SELECT e.salary, e.last_name
+  INTO zarobki_param, nazwisko_param
+  FROM EMPLOYEES e
+  WHERE e.employee_id = employee_id_param;
+END;
+
+DECLARE
+  zarobki NUMBER;
+  nazwisko VARCHAR2(25);
+BEGIN
+  zarobki_nazwisko(100, zarobki, nazwisko);
+  DBMS_OUTPUT.PUT_LINE('Zarobki: ' || zarobki);
+  DBMS_OUTPUT.PUT_LINE('Nazwisko: ' || nazwisko);
+END;
+
+--zad 9e
+CREATE SEQUENCE employees_seq;
+
+CREATE PROCEDURE dodaj_pracownika (
+  salary_param IN NUMBER DEFAULT 1000,
+  hire_date_param IN DATE DEFAULT SYSDATE,
+  job_id_param IN JOBS.JOB_ID%TYPE DEFAULT 'ST_aaa',
+  department_id_param IN DEPARTMENTS.DEPARTMENT_ID%TYPE DEFAULT 20
+) AS
+BEGIN
+  IF salary_param > 20000 THEN
+    RAISE_APPLICATION_ERROR(-20000, 'Wynagrodzenie pracownika jest zbyt wysokie.');
+  ELSE
+    INSERT INTO EMPLOYEES (EMPLOYEE_ID, FIRST_NAME, LAST_NAME, EMAIL, PHONE_NUMBER, HIRE_DATE, JOB_ID, SALARY, COMMISSION_PCT, MANAGER_ID, DEPARTMENT_ID)
+    VALUES (EMPLOYEES_SEQ.NEXTVAL, 'Jan', 'nowak', 'jan.nowak@example.com', '123-456-789', hire_date_param, job_id_param, salary_param, NULL, NULL, department_id_param);
+  END IF;
+END;
+
+BEGIN
+  dodaj_pracownika;
 END;
